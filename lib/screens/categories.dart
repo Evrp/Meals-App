@@ -5,14 +5,43 @@ import 'package:myapp/models/meal.dart';
 import 'package:myapp/widgets/category_grid_item.dart';
 import 'package:myapp/screens/meals.dart';
 
-class CategoriesScreen extends StatelessWidget {
-  const CategoriesScreen({super.key, required this.onToggleFavorite});
+class CategoriesScreen extends StatefulWidget {
+  const CategoriesScreen({
+    super.key,
+    required this.availableMeals,});
 
-    final void Function(Meal meal) onToggleFavorite;
+  final List<Meal> availableMeals;
 
+  @override
+  State<CategoriesScreen> createState() => _CategoriesScreenState();
+}
+
+class _CategoriesScreenState extends State<CategoriesScreen> with SingleTickerProviderStateMixin{
+  late AnimationController _animationController;
+
+  @override
+  void initState() {
+    super.initState();
+
+    _animationController = AnimationController(
+      vsync: this,
+      duration: const Duration(milliseconds: 300),
+      lowerBound: 0.0,
+      upperBound: 1.0,
+    );
+
+    _animationController.forward();
+
+  }
+
+  @override
+  void dispose() {
+    _animationController.dispose();
+    super.dispose();
+  }
 
   void _selectCategory(BuildContext context, Category category) {
-    final filterMeals = dummyMeals
+    final filterMeals = widget.availableMeals
       .where((meal) => meal.categories.contains(category.id))
       .toList();
     Navigator.of(context).push(
@@ -20,7 +49,6 @@ class CategoriesScreen extends StatelessWidget {
         builder: (ctx) => MealsScreen(
           title: category.title,
           meals: filterMeals,
-          onToggleFavorite: onToggleFavorite,
         ),
       ),
     );
@@ -28,7 +56,9 @@ class CategoriesScreen extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    return GridView(
+    return AnimatedBuilder(
+      animation: _animationController,
+      child: GridView(
         gridDelegate: const SliverGridDelegateWithFixedCrossAxisCount(
           crossAxisCount: 2,
           childAspectRatio: 3 / 2,
@@ -44,6 +74,19 @@ class CategoriesScreen extends StatelessWidget {
               },
             )
         ],
-      );
+      ),
+      builder: (contrext, child) => SlideTransition(
+        position:
+          Tween(
+            begin:  const Offset(0,0.3),
+            end: const Offset(0,0),
+          ).animate(
+            CurvedAnimation(
+              parent: _animationController,
+              curve: Curves.easeInOut,
+            ),
+          ),  
+        child: child),
+    );
   }
 }
